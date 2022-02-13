@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 
 import 'package:layout/pages/detail.dart';
 
+import 'package:http/http.dart' as http; //as http คือตั้งชื่อเล่น อันนี้ไปติดตั้งที่ pubspec.yaml depedencies แล้ว
+import 'dart:async';
+
 class HomePage extends StatefulWidget {
   //const HomePage({ Key? key }) : super(key: key);
 
@@ -21,17 +24,18 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: FutureBuilder( builder: (context, snapshot) { //snapshot = ข้อมูลทั้งก้อน [{},{},{}] มาจาก future: ข้างล่าง
-          var data = json.decode(snapshot.data.toString()); //ต้อง import dart:convert    แปลงข้อมูลเป็นข้อความ
+        child: FutureBuilder( builder: (context, AsyncSnapshot snapshot) { //snapshot = ข้อมูลทั้งก้อน [{},{},{}] มาจาก future: ข้างล่าง ***** เพิ่ม AsyncSnapshot 
+          //var data = json.decode(snapshot.data.toString()); //ต้อง import dart:convert    แปลงข้อมูลเป็นข้อความ
           return ListView.builder(  //คือแยกข้อมูลออกเป็นชุดๆ คล้ายๆกับการ run loop (สร้าง itemBuilder ในที่นี้คือ MyBox) ตามจำนวน itemCount
             itemBuilder: (BuildContext context, int index){
-              return MyBox(data[index]['title'], data[index]['subtitle'], data[index]['image_url'], data[index]['detail']);
+              return MyBox(snapshot.data[index]['title'], snapshot.data[index]['subtitle'], snapshot.data[index]['image_url'], snapshot.data[index]['detail']);
             },
-            itemCount: data.length, //ทำให้เพิ่มข้อมูลได้ใน json file เลย ไม่ต้องแก้ code
+            itemCount: snapshot.data.length, //ทำให้เพิ่มข้อมูลได้ใน json file เลย ไม่ต้องแก้ code
             );
 
         },
-        future: DefaultAssetBundle.of(context).loadString('assets/data.json'), 
+        future: getData(), //สร้างมาแทนการดึง assets/data.json ไปใช้ ที่เก็บใน github แทน
+        //future: DefaultAssetBundle.of(context).loadString('assets/data.json'), 
         //ฟังก์ชั่นพิเศษ เกี่ยวกับการทำงาน 2 ฟังก์ชั่นพร้อมกัน ระหว่างสร้างหน้าแอป ก็ไป read json file ด้วย . concept asynchronous ใครเสร็จก่อนก็เสร็จไปเลย ไม่ต้องรอ
         //หลัง future คือเสมือนเอาข้อมูลใน json มาวางใน code เลย
         ),
@@ -86,6 +90,15 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
+  }
+
+
+  Future getData() async {
+    //https://raw.githubusercontent.com/TJessada/BasicAPI/main/data.json
+    var url = Uri.https( 'raw.githubusercontent.com','/TJessada/BasicAPI/main/data.json' );
+    var response = await http.get(url);
+    var result = json.decode(response.body);
+    return result;
   }
 
 }
